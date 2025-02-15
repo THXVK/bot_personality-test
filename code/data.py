@@ -18,3 +18,10 @@ questions = {
         'axe': 'I - E'
     }
 }
+
+base_letters = {
+            'I - E': 'I',
+            'S - N': 'N',
+            'F - T': 'T',
+            'J - P': 'J',
+}
