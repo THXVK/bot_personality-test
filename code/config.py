@@ -4,3 +4,8 @@ from os import getenv
 
 load_dotenv()
 TOKEN = getenv('TOKEN')
+
+
+MIN_LIMIT = 20
+MID_LIMIT = 32
+MAX_LIMIT = 50
