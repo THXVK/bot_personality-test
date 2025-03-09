@@ -6,12 +6,13 @@ from aiogram import Bot, Dispatcher
 from bot import router
 from config import TOKEN
 
+
 bot = Bot(TOKEN)
 dp = Dispatcher()
 
 
 async def main():
-    dp.include_router(router)
+    dp.include_routers(router)
     await dp.start_polling(bot)
 
 
