@@ -6,18 +6,18 @@ from aiogram.types import Message, ReplyKeyboardRemove
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 
-from data import users, questions
+from data import users, questions, base_letters
 from keyboards import answers_kb
 
 router = Router()
-q_limit = 30
+q_limit = 5
 
 
-class Answer(StatesGroup):
+class TestStages(StatesGroup):
     answer_call = State()
+    answer_processing = State()
     question_call = State()
     paused = State()
-
 
 
 #  todo: выбор сложности
@@ -35,65 +35,92 @@ async def start_message(message: Message):
         },
         'p_type': 'untitled'
     }
-    await message.reply('Привет!\nЭто бот-тест на тип личности, основанный на MBTI\n'
+    await message.answer('Привет!\nЭто бот-тест на тип личности, основанный на MBTI\n'
                         'Чтобы начать тест, напиши /start_test',
                         reply_markup=ReplyKeyboardRemove())  # todo: проверка на рестарт
     # todo: выбор сложности на {q_limit}
-    print(message.user_id)
-    print(message.chat.id)
+
 
 
 @router.message(Command('help'))
 async def send_commands_list(message: Message):
-    await message.reply('список команд:')
+    await message.answer('список команд:')
 
 
 @router.message(Command('start_test'))
 async def send_first_question_text(message: Message, state: FSMContext):
-    await state.set_state(Answer.answer_call)
-    await message.reply(f'Вопрос 1/{q_limit}\n{questions[1]['text']}', reply_markup=answers_kb)
+    await message.answer(f'Вопрос 1/{q_limit}\n{questions[1]['text']}', reply_markup=answers_kb)
+    await state.set_state(TestStages.answer_call)
 
 
-@router.message(Answer.answer_call)
+@router.message(TestStages.answer_call)
 async def send_confirmation_text(message: Message, state: FSMContext):
-    await state.clear()
-    user_id = message.user_id
+    await state.set_state(TestStages.answer_processing)
+    user_id = message.from_user.id
     q_num = users[user_id]['q_num']
     axe = questions[q_num]['axe']
 
     if message.text in ['1', '2', '3', '4', '5']:
         answer = -1 + 0.5 * (int(message.text) - 1)
-        users[user_id][axe][answer] += answer
-        await message.reply('Принято!')
+        users[user_id]['axes'][axe] += answer
+        await message.answer('Принято!')
         users[user_id]['q_num'] += 1
-        if q_num := users[user_id]['q_num'] > q_limit:
-            pass  # todo: финал теста
+        q_num = users[user_id]['q_num']
+
+        if q_num > q_limit:
+            persona = ''
+            for letters, value in users[user_id]['axes'].items():
+                l_1, l_2 = letters.split(' - ')
+
+                if value < 0:
+                    persona += l_1
+
+                elif value > 0:
+                    persona += l_2
+
+                else:
+                    letter = base_letters[letters]
+                    persona += letter
+            await message.answer(f'ваш тип: {persona}',
+                                 reply_markup=ReplyKeyboardRemove())
+            await state.clear()
         else:
-            await send_next_question(message)
+            await state.set_state(TestStages.question_call)
+            await send_next_question(message, state)
 
-    elif message.text.startswith('/'):
-        await message.reply('Для вызова команд напишите /stop')
-        await send_next_question(message)
     elif message.text == '/stop_test':
-        await message.reply('Вы остановили тест. Для его продолжения напишите /continue',
-                            reply_markup=ReplyKeyboardRemove())
+        await message.answer('Вы остановили тест. Для его продолжения напишите /continue',
+                             reply_markup=ReplyKeyboardRemove())
+    elif message.text.startswith('/'):
+        await message.answer('Для вызова команд напишите /stop')
+        await send_next_question(message, state)
+
     else:
-        await message.reply('Неверный ответ')
-        await send_next_question(message)
+        await message.answer('Неверный ответ')
+        await send_next_question(message, state)
 
 
+@router.message(TestStages.question_call)
+async def send_warning_message_1(message: Message):
+    await message.answer('подождите отправки вопроса')
 
+
+@router.message(TestStages.answer_processing)
+async def send_warning_message_2(message: Message):
+    await message.answer('подождите обработки ответа')
+
+
+@router.message(TestStages.question_call)
 async def send_next_question(message: Message, state: FSMContext):
-    user_id = message.user_id
+    user_id = message.from_user.id
     q_number = users[user_id]['q_num']
     text = questions[q_number]['text']
-    await message.reply(f'Вопрос {q_number}/{q_limit}\n{text}')
-    await state.set_state()
-    # todo: FSM states?
+    await message.answer(f'Вопрос {q_number}/{q_limit}\n{text}')
+    await state.set_state(TestStages.answer_call)
 
 
 @router.message(Command('continue'))
-async def continue_test(message: Message):
-    user_id = message.user_id
+async def continue_test(message: Message, state: FSMContext):
+    user_id = message.from_user.id
     q_number = users[user_id]['q_num']
-    await send_next_question(message)
+    await send_next_question(message, state)
