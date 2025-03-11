@@ -20,9 +20,6 @@ class TestStages(StatesGroup):
     paused = State()
 
 
-#  todo: выбор сложности
-
-
 @router.message(CommandStart())
 async def start_message(message: Message):
     users[message.from_user.id] = {
@@ -36,10 +33,9 @@ async def start_message(message: Message):
         'p_type': 'untitled'
     }
     await message.answer('Привет!\nЭто бот-тест на тип личности, основанный на MBTI\n'
-                        'Чтобы начать тест, напиши /start_test',
-                        reply_markup=ReplyKeyboardRemove())  # todo: проверка на рестарт
+                         'Чтобы начать тест, напиши /start_test',
+                         reply_markup=ReplyKeyboardRemove())  # todo: проверка на рестарт
     # todo: выбор сложности на {q_limit}
-
 
 
 @router.message(Command('help'))
