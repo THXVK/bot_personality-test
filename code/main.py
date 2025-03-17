@@ -2,7 +2,6 @@ import asyncio
 import logging
 
 from aiogram import Bot, Dispatcher
-#  from log import logger
 from bot import router
 from logger import logger
 from config import TOKEN
@@ -22,4 +21,5 @@ if __name__ == '__main__':
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        logger.info('работа приостановлена')
+        logger.info('process interrupted')
+
