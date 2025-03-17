@@ -3,7 +3,7 @@ from sqlalchemy import BigInteger, select
 from sqlalchemy.orm import mapped_column, Mapped, DeclarativeBase
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncAttrs, async_sessionmaker, AsyncSession
 
-engine = create_async_engine('sqlite+aiosqlite:///:memory:')
+engine = create_async_engine('sqlite+aiosqlite:///database.db')
 async_s = async_sessionmaker(engine, expire_on_commit=False)
 
 
@@ -46,7 +46,7 @@ async def update_user_data(async_session: async_sessionmaker[AsyncSession], user
                 setattr(user, column, new_data)
 
 
-async def get_data(async_session: async_sessionmaker[AsyncSession], user_id):
+async def get_data(async_session: async_sessionmaker[AsyncSession], user_id) -> dict or None:
     async with async_session() as session:
         async with session.begin():
             res = await session.execute(select(UsersTable).where(UsersTable.user_id == user_id))
@@ -54,7 +54,7 @@ async def get_data(async_session: async_sessionmaker[AsyncSession], user_id):
             if user:
                 return {
                     "user_id": user.user_id,
-                    'question_num': user.q_num,
+                    'q_num': user.q_num,
                     'axes': {
                         "I_E": user.I_E,
                         "S_N": user.S_N,
@@ -64,19 +64,3 @@ async def get_data(async_session: async_sessionmaker[AsyncSession], user_id):
                     "p_type": user.p_type,
                 }
             return None
-
-
-async def main():
-    """Основная асинхронная функция для тестирования."""
-    await create_table()
-
-    await add_user(async_s, 12333)
-
-    await update_user_data(async_s, 12333, 'q_num', 2)
-
-    user = await get_data(async_s, 12333)
-    print(user)
-
-
-# Запуск асинхронного кода
-asyncio.run(main())
