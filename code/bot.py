@@ -5,7 +5,7 @@ from aiogram.types import Message, ReplyKeyboardRemove
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 from keyboards import answers_kb
-from config import QUESTIONS, BASE_LETTERS
+from config import QUESTIONS, BASE_LETTERS, PERSONALITIES_DESCRIPTION
 from data import add_user, get_data, update_user_data, async_s
 
 
@@ -28,18 +28,37 @@ async def start_message(message: Message):
                              'Чтобы начать тест, напиши /start_test',
                              reply_markup=ReplyKeyboardRemove())  # todo: проверка на рестарт
     else:
-        await message.answer('вы уже зарегистрированы')
+        await message.answer('Вы уже зарегистрированы. '
+                             'Если вы хотите пройти тест заново, то используйте команду /restart')
+
+
+@router.message(Command('restart'))
+async def restart(message: Message, state: FSMContext) -> None:
+    user_id = message.from_user.id
+    await update_user_data(async_s, user_id, 'p_type', 'untitled')
+    await update_user_data(async_s, user_id, 'q_num', 1)
+    await send_first_question_text(message, state)
 
 
 @router.message(Command('help'))
 async def send_commands_list(message: Message):
-    await message.answer('список команд:')
+    await message.answer('список команд:\n'
+                         '/start - стартовая команда для регистрации\n'
+                         '/restart - команда для прохождения теста заново\n'
+                         '/start_test - команда для начала прохождения теста\n'
+                         '/stop_test - служит для остановки прохождения теста\n'
+                         '/continue - нужна для продолжения начатого теста\n'
+                         '/help - отправляет список команд с их описанием')
 
 
 @router.message(Command('start_test'))
 async def send_first_question_text(message: Message, state: FSMContext):
-    await message.answer(f'Вопрос 1/{q_limit}\n{QUESTIONS[1]['text']}', reply_markup=answers_kb)
-    await state.set_state(TestStages.answer_call)
+    user_id = message.from_user.id
+    data = await get_data(async_s, user_id)
+    if data['p_type'] != 'untitled' and data['q_num'] != 1:
+        await message.answer('для прохождения теста заново используйте /restart, а для продолжения - /continue')
+        await message.answer(f'Вопрос 1/{q_limit}\n{QUESTIONS[1]['text']}', reply_markup=answers_kb)
+        await state.set_state(TestStages.answer_call)
 
 
 @router.message(TestStages.answer_call)
@@ -76,9 +95,16 @@ async def send_confirmation_text(message: Message, state: FSMContext):
                     persona += letter
                     
                 await update_user_data(async_s, user_id, 'p_type', persona)
-            await message.answer(f'ваш тип: {persona}',
-                                 reply_markup=ReplyKeyboardRemove())
-            await state.clear()
+            with open(f'../{PERSONALITIES_DESCRIPTION[persona]['picture']}') as photo:
+                await message.send_photo(photo=photo, caption=f'''ваш тип: {persona}.
+
+{PERSONALITIES_DESCRIPTION[persona]['quote']}
+
+{PERSONALITIES_DESCRIPTION[persona]['description']}''',
+                                         reply_markup=ReplyKeyboardRemove())
+                await message.answer('Если вы хотите пройти более подробный тест, или узнать больше о своем типе'
+                                     ' личности, то посетите сайт 16personalities.com')
+                await state.clear()
         else:
             await state.set_state(TestStages.question_call)
             await send_next_question(message, state)
@@ -87,7 +113,7 @@ async def send_confirmation_text(message: Message, state: FSMContext):
         await message.answer('Вы остановили тест. Для его продолжения напишите /continue',
                              reply_markup=ReplyKeyboardRemove())
     elif message.text.startswith('/'):
-        await message.answer('Для вызова команд напишите /stop')
+        await message.answer('Для вызова команд напишите /stop_test')
         await send_next_question(message, state)
 
     else:
@@ -120,4 +146,6 @@ async def continue_test(message: Message, state: FSMContext):
     user_id = message.from_user.id
     user = await get_data(async_s, user_id)
     q_number = user['q_num']
+    if q_number == 1 or q_number == 32:
+        await message.answer('У вас нет активных тестов')
     await send_next_question(message, state)
