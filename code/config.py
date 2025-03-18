@@ -4,6 +4,7 @@ from os import getenv
 
 load_dotenv()
 TOKEN = getenv('TOKEN')
+DATABASE_URL = getenv('DATABASE_URL')
 
 MID_LIMIT = 32
 
@@ -147,7 +148,7 @@ BASE_LETTERS = {
             'F_T': 'T',
             'J_P': 'J',
 }
-
+# словарь с описанием личностей, картинками и цитатами
 PERSONALITIES_DESCRIPTION = {
     "INTJ": {
         "description": "'Стратег. Инновационный мыслитель с богатым воображением и стратегическим умом. "

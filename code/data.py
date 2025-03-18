@@ -1,9 +1,9 @@
-import asyncio
 from sqlalchemy import BigInteger, select
 from sqlalchemy.orm import mapped_column, Mapped, DeclarativeBase
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncAttrs, async_sessionmaker, AsyncSession
+from config import DATABASE_URL
 
-engine = create_async_engine('sqlite+aiosqlite:///database.db')
+engine = create_async_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 async_s = async_sessionmaker(engine, expire_on_commit=False)
 
 
