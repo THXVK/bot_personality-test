@@ -129,6 +129,8 @@ async def restart(message: Message, state: FSMContext) -> None:
     await state.set_state(TestStages.answer_call)
     await update_user_data(async_s, user_id, 'p_type', 'untitled')
     await update_user_data(async_s, user_id, 'q_num', 1)
+    photo = FSInputFile('app/pictures/')
+            await bot.send_photo(chat_id=message.chat.id, photo=photo,
     await send_first_question_text(message, state)
 
 
