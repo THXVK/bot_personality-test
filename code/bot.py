@@ -124,7 +124,7 @@ async def start_message(message: Message):
         await message.answer('Вы уже зарегистрированы. '
                              'Если вы хотите пройти тест заново, то используйте команду /restart')
     try:
-        photo = FSInputFile('app/pictures/ENFJ_protagonist.jpeg')
+        photo = FSInputFile('../pictures/ENFJ_protagonist.jpeg')
         await bot.send_photo(chat_id=message.chat.id, photo=photo, caption='тестовое фото')
     except Exception as e:
         logging.error(f"Ошибка при отправке фото: {e}")
