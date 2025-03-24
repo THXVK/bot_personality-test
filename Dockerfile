@@ -1,18 +1,36 @@
 FROM python:3.13-slim
 
-# Установка рабочей директории
+# Создаем непривилегированного пользователя
+RUN useradd -m appuser && \
+    mkdir -p /app && \
+    chown appuser:appuser /app
+
 WORKDIR /app
 
-# Установка зависимостей
-COPY requirements.txt .
+# Устанавливаем системные зависимости (если нужны)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    libjpeg-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Копируем зависимости отдельно для кэширования
+COPY --chown=appuser:appuser requirements.txt .
+
+# Создаем venv и устанавливаем зависимости
 RUN python -m venv /opt/venv && \
-    /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
+    /opt/venv/bin/pip install --no-cache-dir -r requirements.txt && \
+    chown -R appuser:appuser /opt/venv
 
-# Копирование исходного кода
-COPY . .
+# Копируем основной код
+COPY --chown=appuser:appuser . .
 
-# Указываем виртуальное окружение по умолчанию
-ENV PATH="/opt/venv/bin:$PATH"
+# Настраиваем окружение
+ENV PATH="/opt/venv/bin:$PATH" \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app
 
-# Команда для запуска бота
+# Переключаемся на непривилегированного пользователя
+USER appuser
+
+# Запускаем приложение
 CMD ["python", "code/main.py"]

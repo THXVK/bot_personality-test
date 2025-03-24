@@ -116,6 +116,12 @@ async def send_next_question(message: Message, state: FSMContext):
 @router.message(CommandStart())
 async def start_message(message: Message):
     user_id = message.from_user.id
+    try:
+        photo = FSInputFile('../pictures/ENFJ_protagonist.jpeg')
+        await bot.send_photo(chat_id=message.chat.id, photo=photo, caption='тестовое фото')
+    except Exception as e:
+        logging.error(f"Ошибка при отправке фото: {e}")
+
     if await add_user(async_s, user_id):
         await message.answer('Привет!\nЭто бот-тест на тип личности, основанный на MBTI\n'
                              'Чтобы начать тест, напиши /start_test',
@@ -123,11 +129,6 @@ async def start_message(message: Message):
     else:
         await message.answer('Вы уже зарегистрированы. '
                              'Если вы хотите пройти тест заново, то используйте команду /restart')
-    try:
-        photo = FSInputFile('../pictures/ENFJ_protagonist.jpeg')
-        await bot.send_photo(chat_id=message.chat.id, photo=photo, caption='тестовое фото')
-    except Exception as e:
-        logging.error(f"Ошибка при отправке фото: {e}")
 
 
 @router.message(Command('restart'))
