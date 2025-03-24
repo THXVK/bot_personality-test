@@ -62,13 +62,15 @@ async def send_confirmation_text(message: Message, state: FSMContext) -> None:
 
             await state.clear()
             await msg.delete()
-            photo = FSInputFile(f'../pictures/{PERSONALITIES_DESCRIPTION[persona]['picture']}')
+            # строка ниже использует путь, приспособленный для docker
+            photo = FSInputFile(f'/app/pictures/{PERSONALITIES_DESCRIPTION[persona]['picture']}')
             await bot.send_photo(chat_id=message.chat.id, photo=photo, caption=f'''ваш тип: {persona}.
 
-{PERSONALITIES_DESCRIPTION[persona]['quote']}
+{PERSONALITIES_DESCRIPTION[persona]['quote']} 
 
 {PERSONALITIES_DESCRIPTION[persona]['description']}''',
-                                         reply_markup=ReplyKeyboardRemove())
+                                         reply_markup=ReplyKeyboardRemove())  # сообщение содержит картинку персонажа
+
             await message.answer('Если вы хотите пройти более подробный тест, или узнать больше о своем типе'
                                  ' личности, то посетите сайт 16personalities.com')
 
@@ -116,20 +118,6 @@ async def send_next_question(message: Message, state: FSMContext):
 @router.message(CommandStart())
 async def start_message(message: Message):
     user_id = message.from_user.id
-    try:
-        photo = FSInputFile('/app/pictures/ENFJ_protagonist.jpeg')
-        await bot.send_photo(chat_id=message.chat.id, photo=photo, caption='тестовое фото 1')
-        logging.info('способ 1 сработал успешно')
-    except Exception as e:
-        logging.error(f"Ошибка при отправке фото (способ 1): {e}")
-
-    try:
-        with open('/app/pictures/ENFJ_protagonist.jpeg', 'rb') as f:
-            await bot.send_photo(message.chat.id, f, caption='тестовое фото 2')
-            logging.info('способ 2 сработал успешно')
-    except Exception as e:
-        logging.error(f"Ошибка при отправке фото (способ 2): {e}")
-
     if await add_user(async_s, user_id):
         await message.answer('Привет!\nЭто бот-тест на тип личности, основанный на MBTI\n'
                              'Чтобы начать тест, напиши /start_test',
