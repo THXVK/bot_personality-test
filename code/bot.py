@@ -55,7 +55,7 @@ async def send_confirmation_text(message: Message, state: FSMContext) -> None:
                 else:
                     letter = BASE_LETTERS[letters]
                     persona += letter
-                    
+
                 await update_user_data(async_s, user_id, 'p_type', persona)
 
             await state.clear()
@@ -121,6 +121,8 @@ async def start_message(message: Message):
     else:
         await message.answer('Вы уже зарегистрированы. '
                              'Если вы хотите пройти тест заново, то используйте команду /restart')
+    photo = FSInputFile('app/pictures/ENFJ_protagonist.jpeg')
+    await bot.send_photo(chat_id=message.chat.id, photo=photo, caption='тестовое фото')
 
 
 @router.message(Command('restart'))
