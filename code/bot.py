@@ -1,4 +1,6 @@
 import asyncio
+import logging
+
 from aiogram import Router, Bot
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message, ReplyKeyboardRemove, FSInputFile
@@ -121,8 +123,11 @@ async def start_message(message: Message):
     else:
         await message.answer('Вы уже зарегистрированы. '
                              'Если вы хотите пройти тест заново, то используйте команду /restart')
-    photo = FSInputFile('app/pictures/ENFJ_protagonist.jpeg')
-    await bot.send_photo(chat_id=message.chat.id, photo=photo, caption='тестовое фото')
+    try:
+        photo = FSInputFile('app/pictures/ENFJ_protagonist.jpeg')
+        await bot.send_photo(chat_id=message.chat.id, photo=photo, caption='тестовое фото')
+    except Exception as e:
+        logging.error(f"Ошибка при отправке фото: {e}")
 
 
 @router.message(Command('restart'))
