@@ -117,7 +117,7 @@ async def send_next_question(message: Message, state: FSMContext):
 async def start_message(message: Message):
     user_id = message.from_user.id
     try:
-        photo = FSInputFile('app/pictures/ENFJ_protagonist.jpeg')
+        photo = FSInputFile('/app/pictures/ENFJ_protagonist.jpeg')
         await bot.send_photo(chat_id=message.chat.id, photo=photo, caption='тестовое фото 1')
         logging.info('способ 1 сработал успешно')
     except Exception as e:
