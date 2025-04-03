@@ -1,5 +1,4 @@
 import asyncio
-import logging
 
 from aiogram import Router, Bot
 from aiogram.filters import Command, CommandStart
@@ -35,7 +34,7 @@ async def send_confirmation_text(message: Message, state: FSMContext) -> None:
     if message.text in ['1', '2', '3', '4', '5']:
         answer = -1 + 0.5 * (int(message.text) - 1)
         user['axes'][axe] += answer
-        await update_user_data(async_s, user_id, axe, q_num + 1)
+        await update_user_data(async_s, user_id, axe, user['axes'][axe])
         await message.answer('Принято!')
         await update_user_data(async_s, user_id, 'q_num', q_num + 1)
         user = await get_data(async_s, user_id)
@@ -131,6 +130,10 @@ async def start_message(message: Message):
 async def restart(message: Message, state: FSMContext) -> None:
     user_id = message.from_user.id
     await state.set_state(TestStages.answer_call)
+    await update_user_data(async_s, user_id, 'I_E', 0)
+    await update_user_data(async_s, user_id, 'S_N', 0)
+    await update_user_data(async_s, user_id, 'F_T', 0)
+    await update_user_data(async_s, user_id, 'J_P', 0)
     await update_user_data(async_s, user_id, 'p_type', 'untitled')
     await update_user_data(async_s, user_id, 'q_num', 1)
     await send_first_question_text(message, state)
@@ -157,7 +160,8 @@ async def send_first_question_text(message: Message, state: FSMContext):
     elif data['p_type'] == 'untitled' and data['q_num'] != 1:
         await message.answer('для продолжения теста используйте /continue')
     else:
-        await message.answer('В вопросе будут представлены 2 противоположности (через |). Вы должны оценить  от 1 до 5,'
+        await message.answer('В вопросе будут представлены 2 противоположности (через |). Вы должны оценить их '
+                             'от 1 до 5,'
                              ' где 1 - полностью согласен с левым утверждением,'
                              ' а 5 - полностью согласен с правым утверждением')
         await asyncio.sleep(1)
